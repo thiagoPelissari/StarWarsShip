@@ -1,0 +1,152 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+<style>
+    .ships-data {
+        border-radius: 10px;
+        background-color: #eeeeee;
+        min-height: 100px;
+        margin-bottom:10px;
+    }
+</style>
+
+@section scripts{
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("#calculate").click(function () {
+
+                var $distance = $(".distance");
+                if ($distance.val() == "") {
+                    $distance.css("border", "1px solid red");
+                }
+                else {
+                    $distance.css("border-color", "#555555");
+
+                    var distante =
+                        $.ajax({
+                            url: 'https://swapi.co/api/starships',
+                            dataType: 'Json',
+                            type: 'POST',
+                            data: {},
+                            beforeSend: function () {
+                                $(".result-ships").html("Loading <progress max='100'></progress>");
+                                $(".inputControl").prop("disable",true);
+                            },
+                            success: function (data) {
+                                var html = "";
+                                $.each(data.results, function (i, item) {
+                                    html += "<div class='row ships-data'>\
+                                                <div class='row'>\
+                                                   <div class='col-md-12'>\
+                                                        <h3>"+ item.name + " / " + item.model+"</h3 >\
+                                                    </div>\
+                                                </div>\
+                                                <div class='row'>\
+                                                    <div class='col-sm-4'>\
+                                                        <p>\
+                                                            <b>Resupply for this travel:</b> "+ CalculateResupply($distance.val(), item.consumables, item.MGLT)+"\
+                                                        </p>\
+                                                        <p>\
+                                                            <b>Appered in: </b> "+ (item.films.length > 1 ? item.films.length + " films" : item.films.length + " film") +" \
+                                                        </p>\
+                                                        <p>\
+                                                            <b>Consumables Capability:</b> "+ item.consumables +"\
+                                                         </p>\
+                                                    </div >\
+                                                    <div class='col-sm-4'>\
+                                                        <p>\
+                                                            <b>Total crew:</b> "+ item.crew + "\
+                                                        </p>\
+                                                        <p>\
+                                                            <b>Total passengers: </b> "+ item.passengers + " \
+                                                        </p>\
+                                                        <p>\
+                                                            <b>Speed:</b> "+ item.MGLT+" Mglt per hour\
+                                                         </p>\
+                                                    </div >\
+                                                </div>\
+                                            </div> ";
+
+
+                                });
+
+
+                                $(".result-ships").html(html);
+                            }
+                        });
+                }
+
+            });
+        });
+
+        function CalculateResupply(distance, consumables, mglt)
+        {
+            var consumablesTime = "";
+            var ratioNumber = 0;
+            consumablesTime = consumables.substring(consumables.indexOf(" ") + 1);
+            consumables = consumables.substring(0,consumables.indexOf(" "));
+
+            switch (consumablesTime)
+            {
+                case "year":
+                case "years":
+                    ratioNumber = 8760;
+                    break;
+                    
+                case "month":
+                case "months":
+                    ratioNumber = 730;
+                    break;
+                case "day":
+                case "days":
+                    ratioNumber = 24;
+                    break;
+                case "week":
+                case "weeks":
+                    ratioNumber = 168;
+                    break;
+            }
+
+
+
+            var numberOfSupply = 0;
+            var supplyDistance = consumables != null && consumables != undefined ? (consumables * ratioNumber) : 0;
+            supplyDistance = mglt != null && mglt != undefined ? (supplyDistance * mglt) : 0;
+
+            if (supplyDistance == 0) 
+                return "Not Specified";
+
+
+            numberOfSupply = Math.floor(distance / supplyDistance);
+
+
+            return numberOfSupply > 1 ? numberOfSupply + " times" : numberOfSupply + " time";
+        }
+    </script>
+}
+
+
+
+<div class="jumbotron">
+    <h1>Star Wars Test</h1>
+    <p class="lead">
+        Thiago Pelissari
+    </p>
+
+    @Html.Action("_ModalDocument","Home")
+</div>
+
+<div class="row">
+    <div class="form-group">
+        <div class="col-md-12 inputControl">
+            <input class="form-control distance" type="number" placeholder="Distance in MGLT..." />
+            <button type="button" class="btn btn-success" id="calculate">Calculate</button>
+        </div>
+    </div>
+</div>
+
+
+<div class="result-ships">
+
+</div>
